@@ -4,6 +4,7 @@
 #include <SDL2/SDL_image.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
+#include <math.h>
 
 // Ablakméret
 #define WIDTH 800
@@ -11,10 +12,12 @@
 
 SDL_Window* window = NULL;
 SDL_GLContext glContext;
-GLuint wallTexture, floorTexture, ceilingTexture;
+GLuint wallTexture, floorTexture, ceilingTexture, alloutsideTexture;
 
 float cameraX = 0.0f, cameraY = 0.0f, cameraZ = 6.0f; 
 int lastMouseX, lastMouseY;
+float circleX = 0.0f;
+float circleZ = 0.0f;
 
 GLuint loadTexture(const char* filename) {
     SDL_Surface* image = IMG_Load(filename);
@@ -81,9 +84,30 @@ int init() {
     wallTexture = loadTexture("Subtle-Plaster.jpg");
     floorTexture = loadTexture("Mosaic-small.jpg");
     ceilingTexture = loadTexture("Cracked-paint.jpg");
-
+    alloutsideTexture = loadTexture("Color-white.jpg");
     return 1;
 }
+
+void drawCircleOnCeiling(float x, float z, float radius, int segments) {
+    glColor3f(1.0f, 0.0f, 0.0f); 
+    glDisable(GL_TEXTURE_2D); 
+
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex3f(x, 0.999f, z); 
+
+    for (int i = 0; i <= segments; ++i) {
+        float angle = 2.0f * M_PI * i / segments;
+        float dx = cos(angle) * radius;
+        float dz = sin(angle) * radius;
+        glVertex3f(x + dx, 0.999f, z + dz);
+    }
+
+    glEnd();
+
+    glEnable(GL_TEXTURE_2D); 
+    glColor3f(1.0f, 1.0f, 1.0f);
+}
+
 
 // Kocka kirajzolása
 void drawCube() {
@@ -115,6 +139,7 @@ void drawCube() {
 
     glBindTexture(GL_TEXTURE_2D, ceilingTexture);
     glBegin(GL_QUADS);
+
     // Teteje 
     glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.0f,  1.0f, -1.0f);
     glTexCoord2f(1.0f, 0.0f); glVertex3f(-2.0f,  1.0f,  1.0f);
@@ -122,6 +147,7 @@ void drawCube() {
     glTexCoord2f(0.0f, 1.0f); glVertex3f( 2.0f,  1.0f, -1.0f);
     glEnd();
     // Alja
+
     glBindTexture(GL_TEXTURE_2D, floorTexture);
     glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.0f, -1.0f, -1.0f);
@@ -130,6 +156,41 @@ void drawCube() {
     glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.0f, -1.0f,  1.0f);
 
     glEnd();
+
+    glBindTexture(GL_TEXTURE_2D, alloutsideTexture);
+    glBegin(GL_QUADS);
+
+    glTexCoord2f(0.0f, 0.0f); glVertex3f( 2.0f, -1.0f, -1.01f);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-2.0f, -1.0f, -1.01f);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.0f,  1.0f, -1.01f);
+    glTexCoord2f(0.0f, 1.0f); glVertex3f( 2.0f,  1.0f, -1.01f);
+
+// Külső bal fal
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.01f, -1.5f,  1.5f);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-2.01f, -1.5f, -1.5f);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.01f,  1.5f, -1.5f);
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.01f,  1.5f,  1.5f);
+
+// Külső jobb fal
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(2.01f, -2.0f, -1.5f);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(2.01f, -1.5f,  1.5f);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(2.01f,  1.5f,  1.5f);
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(2.01f,  1.5f, -1.5f);
+
+// Külső plafon
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.5f, 1.01f, -1.5f);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f( 2.5f, 1.01f, -1.5f);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f( 2.5f, 1.01f,  1.5f);
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.5f, 1.01f,  1.5f);
+
+// Külső padló
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.5f, -1.001f, -1.5f);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-2.5f, -1.001f,  1.5f);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f( 2.5f, -1.001f,  1.5f);
+    glTexCoord2f(0.0f, 1.0f); glVertex3f( 2.5f, -1.001f, -1.5f);
+    glEnd();
+
+
 }
 
 // Kirajzolás
@@ -146,6 +207,7 @@ void render() {
     //glRotatef(angle, 1.0f, 1.0f, 0.0f);
     drawCube();
     //glPopMatrix();
+    drawCircleOnCeiling(circleX, circleZ, 0.1f, 32);
 
     SDL_GL_SwapWindow(window);
 }
@@ -164,18 +226,37 @@ int main(int argc, char* argv[]) {
     while (running) {
         const Uint8* keystates = SDL_GetKeyboardState(NULL);
 
-        // Zoomolás a T és G gombokkal
         if (keystates[SDL_SCANCODE_UP]) {
-            cameraZ -= 0.05f; // Közeledés
+            cameraZ -= 0.05f; 
         }
         if (keystates[SDL_SCANCODE_DOWN]) {
-            cameraZ += 0.05f; // Távolodás
+            cameraZ += 0.05f; 
         }
 
 
         // Korlátok: min. 3.0, max. 10.0
         if (cameraZ < 3.0f) cameraZ = 3.0f;
         if (cameraZ > 10.0f) cameraZ = 10.0f;
+
+        // Kör mozgatása
+        if (keystates[SDL_SCANCODE_W]) {
+            circleZ -= 0.05f;
+        }
+        if (keystates[SDL_SCANCODE_S]) {
+            circleZ += 0.05f;
+        }
+        if (keystates[SDL_SCANCODE_A]) {
+            circleX -= 0.05f;
+        }
+        if (keystates[SDL_SCANCODE_D]) {
+            circleX += 0.05f;
+        }
+        
+        // Korlátozás kör
+        if (circleX < -1.9f) circleX = -1.9f;
+        if (circleX >  1.9f) circleX =  1.9f;
+        if (circleZ < -0.9f) circleZ = -0.9f;
+        if (circleZ >  0.9f) circleZ =  0.9f;
 
 
         if (keystates[SDL_SCANCODE_L]) {
