@@ -128,6 +128,27 @@ void main_loop() {
         }
 
         const Uint8* keystates = SDL_GetKeyboardState(NULL);
+
+         // Kör mozgatása
+        if (keystates[SDL_SCANCODE_W]) {
+            circleZ -= 0.05f;
+        }
+        if (keystates[SDL_SCANCODE_S]) {
+            circleZ += 0.05f;
+        }
+        if (keystates[SDL_SCANCODE_A]) {
+            circleX -= 0.05f;
+        }
+        if (keystates[SDL_SCANCODE_D]) {
+            circleX += 0.05f;
+        }
+        
+        // Korlátozás kör
+        if (circleX < -1.9f) circleX = -1.9f;
+        if (circleX >  1.9f) circleX =  1.9f;
+        if (circleZ < -0.9f) circleZ = -0.9f;
+        if (circleZ >  0.9f) circleZ =  0.9f;
+
         handle_camera_keys(keystates);
         if (keystates[SDL_SCANCODE_ESCAPE]) {
             running = 0;
