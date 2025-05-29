@@ -37,7 +37,19 @@ int init_app() {
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_COLOR_MATERIAL);
+    glShadeModel(GL_SMOOTH);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    
+    // Teljes sötétség, csak a fény világítson
+    GLfloat ambient_light[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient_light);
+
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);  // ez lehet később sötétebb is, ha kell
+    
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
     SDL_SetWindowGrab(window, SDL_TRUE);
