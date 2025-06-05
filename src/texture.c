@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "texture.h"
 
-GLuint wallTexture, floorTexture, ceilingTexture, alloutsideTexture;
+GLuint wallTexture, floorTexture, ceilingTexture, alloutsideTexture, guideTexture, duckTexture;
 
 GLuint loadTexture(const char* filename) {
     SDL_Surface* image = IMG_Load(filename);
@@ -29,4 +29,6 @@ void load_all_textures() {
     floorTexture = loadTexture("textures/Mosaic-small.jpg");
     ceilingTexture = loadTexture("textures/Cracked-paint.jpg");
     alloutsideTexture = loadTexture("textures/Color-white.jpg");
+    guideTexture = loadTexture("textures/Guide.jpg");
+    duckTexture = loadTexture("textures/duck.jpg");
 }

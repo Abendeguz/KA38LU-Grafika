@@ -15,9 +15,9 @@ void handle_mouse_motion(int xrel, int yrel) {
 }
 
 void handle_camera_keys(const Uint8* keystates) {
-    if (keystates[SDL_SCANCODE_UP]) cameraZ -= 0.05f;
-    if (keystates[SDL_SCANCODE_DOWN]) cameraZ += 0.05f;
+    if (keystates[SDL_SCANCODE_UP]) cameraZ -= 0.15f;
+    if (keystates[SDL_SCANCODE_DOWN]) cameraZ += 0.15f;
 
     if (cameraZ < 30.0f) cameraZ = 30.0f;
-    if (cameraZ > 120.0f) cameraZ = 120.0f;
+    if (cameraZ > 70.0f) cameraZ = 70.0f;
 }

@@ -5,13 +5,98 @@
 #include "../include/camera.h"
 #include "../include/texture.h"
 #include "scene.h"
+#include <obj/draw.h>
+
+
 
 extern SDL_Window* window;
 
 float circleX = 0.0f, circleZ = 0.0f;
 
 
+void init_scene(Scene* scene)
+{
+    // Betölti a cube modellt (ha kell)
+    //load_model(&(scene->cube), "assets/cube.obj"); // opcionális
+
+    // Betölti a cat és duck modelleket
+    load_model(&(scene->cat), "assets/cat.obj");
+    load_model(&(scene->duck), "assets/duck.obj");
+
+    // Alapértelmezett anyag
+    scene->material.ambient.red = 1.0;
+    scene->material.ambient.green = 1.0;
+    scene->material.ambient.blue = 1.0;
+
+    scene->material.diffuse.red = 1.0;
+    scene->material.diffuse.green = 1.0;
+    scene->material.diffuse.blue = 1.0;
+
+    scene->material.specular.red = 1.0;
+    scene->material.specular.green = 1.0;
+    scene->material.specular.blue = 1.0;
+
+    scene->material.shininess = 1000.0;
+}
+
+void set_material(const Material* material)
+{
+    float ambient_material_color[] = {
+        material->ambient.red,
+        material->ambient.green,
+        material->ambient.blue
+    };
+
+    float diffuse_material_color[] = {
+        material->diffuse.red,
+        material->diffuse.green,
+        material->diffuse.blue
+    };
+
+    float specular_material_color[] = {
+        material->specular.red,
+        material->specular.green,
+        material->specular.blue
+    };
+
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient_material_color);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse_material_color);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular_material_color);
+
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &(material->shininess));
+}
+
+
+void render_scene(const Scene* scene)
+{
+    set_material(&(scene->material));
+    glEnable(GL_LIGHTING);
+
+    // CAT modellek megjelenítése
+    glBindTexture(GL_TEXTURE_2D, ceilingTexture);
+    glPushMatrix();
+    glTranslatef(-10.0f, -10.0f, 0.0f); // helyezzük el a padlóra
+    glScalef(5.5f, 5.5f, 5.5f);
+    //glDisable(GL_LIGHT1);
+    draw_model(&(scene->cat));
+    //glEnable(GL_LIGHT1);
+    glPopMatrix();
+
+    // DUCK modellek megjelenítése
+    glBindTexture(GL_TEXTURE_2D, duckTexture);
+
+    glPushMatrix();
+    glTranslatef(5.0f, -9.9f, 0.0f); // másik sarokba
+    glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
+    glRotatef(270.0f, 1.0f, 0.0f, 0.0f);
+    glScalef(3.5f, 3.5f, 3.5f);
+    draw_model(&(scene->duck));
+    glPopMatrix();
+}
+
 void drawCircleOnCeiling(float x, float z, float radius, int segments) {
+    glDisable(GL_LIGHTING);
+
     glColor3f(1.0f, 0.0f, 0.0f);
     glDisable(GL_TEXTURE_2D);
 
@@ -84,8 +169,8 @@ void drawCube() {
     glBegin(GL_QUADS);
 
     float floorY = -1.0f * SCALE;
-    int tileCountX = 100;
-    int tileCountZ = 100;
+    int tileCountX = 150;
+    int tileCountZ = 150;
     float startX = -2.0f * SCALE;
     float startZ = -1.0f * SCALE;
     float tileWidth = (4.0f * SCALE) / tileCountX;
@@ -142,21 +227,50 @@ void drawCube() {
 
     glEnd();
 
+    glBindTexture(GL_TEXTURE_2D, guideTexture);
+    glBegin(GL_QUADS);
+
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.05f * SCALE, 1.01f * SCALE,  1.05f * SCALE); // bal alsó
+    glTexCoord2f(1.0f, 1.0f); glVertex3f( 2.05f * SCALE, 1.01f * SCALE,  1.05f * SCALE); // jobb alsó
+    glTexCoord2f(1.0f, 0.0f); glVertex3f( 2.05f * SCALE, 2.5f * SCALE,  1.05f * SCALE); // jobb felső
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.05f * SCALE, 2.5f * SCALE,  1.05f * SCALE); // bal felső
+
+    glEnd();
 
 }
 
 void setup_spotlight(float x, float z) {
-    GLfloat light_position[] = { x, 1.0f, z, 1.0f };
-    GLfloat spot_direction[] = { 0.0f, -1.0f, 0.0f };
-    GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
-    GLfloat light_specular[] = { 0.5f, 0.5f, 0.5f, 1.0f };
+    
+    // Background light
 
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-    glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, spot_direction);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
-    glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 10.0f);
-    glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, 5.0f);
+    float position[] = { 0.0f, 0.0f, -10.0f, 1.0f };
+    float ambient_light[] = { 0.0f, 0.0f, 0.1f, 1.0f };
+    float diffuse_light[] = { 0.0f, 0.0f, 0.2f, 1.0f };
+    float specular_light[] = { 1.f, 1.f, 1.f, 1.0f };
+
+    glLightfv(GL_LIGHT0, GL_POSITION, position);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, specular_light);
+
+    // glDisable(GL_LIGHT0);
+
+    // Spot light
+
+    GLfloat spot_position[] = { x, 1.0f, z, 1.0f };
+    GLfloat spot_direction[] = { 0.0f, -1.0f, 0.0f };
+    GLfloat spot_ambient[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+    GLfloat spot_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
+    GLfloat spot_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+    glLightfv(GL_LIGHT1, GL_POSITION, spot_position);
+    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spot_direction);
+    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 15.0f);
+    glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 100.f);
+    glLightfv(GL_LIGHT1, GL_AMBIENT, spot_ambient);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, spot_diffuse);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, spot_specular);
+
 }
 
 void main_loop() {
@@ -190,10 +304,10 @@ void main_loop() {
         
         // Korlátozás kör
         
-        if (circleX < -19.9f) circleX = -19.9f;
-        if (circleX >  19.9f) circleX =  19.9f;
-        if (circleZ < -9.9f) circleZ = -9.9f;
-        if (circleZ >  9.9f) circleZ =  9.9f;
+        if (circleX < -19.0f) circleX = -19.0f;
+        if (circleX >  19.0f) circleX =  19.0f;
+        if (circleZ < -9.0f) circleZ = -9.0f;
+        if (circleZ >  9.0f) circleZ =  9.0f;
         
         handle_camera_keys(keystates);
         if (keystates[SDL_SCANCODE_ESCAPE]) {
@@ -208,7 +322,19 @@ void main_loop() {
 
         setup_spotlight(circleX, circleZ);
         drawCircleOnCeiling(circleX, circleZ, 1.0f, 32);
+        static Scene scene;
+        static int scene_initialized = 0;
+
+        if (!scene_initialized) {
+        init_scene(&scene);
+            scene_initialized = 1;
+        }
+
+        // render cube
         drawCube();
+
+        // render models
+        render_scene(&scene);
 
         SDL_GL_SwapWindow(window);
         SDL_Delay(16); // kb. 60 FPS
